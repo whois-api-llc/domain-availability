@@ -1,5 +1,3 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,12 +13,12 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ApiKeyDomainAvailability {
+public class DomainAvailabilityApiKeySample {
 
-    private Logger logger = Logger.getLogger(ApiKeyDomainAvailability.class.getName());
+    private Logger logger = Logger.getLogger(DomainAvailabilityApiKeySample.class.getName());
 
     public static void main(String[]args) {
-        new ApiKeyDomainAvailability().getSimpleDomainUsingApiKey();
+        new DomainAvailabilityApiKeySample().getSimpleDomainUsingApiKey();
     }
 
     private void getSimpleDomainUsingApiKey() {
