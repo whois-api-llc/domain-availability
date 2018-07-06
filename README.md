@@ -1,13 +1,16 @@
-# Making a query to Domain Availability API web service
+# Using the Domain Availability API web service
 
-[Domain Availability API](https://www.whoisxmlapi.com/domain-availability-api.php) 
-is the most accurate domain availability checker offered on the market.
-The first 500 domain name availability lookups are complimentary when you register for a free developer account.
+[Domain Availability API](https://www.whoisxmlapi.com/domain-availability-api.php)
+checks whether a domain name is available for registration for nearly all of
+the TLDs.
 
-Here you'll find examples of using
-[Domain Availability](https://www.whoisxmlapi.com/domain-availability-api.php) Web API
-implemented in multiple languages.
+Here you'll find examples of using the API implemented in multiple languages.
 
-Please, refer to
-[Domain availability API User Guide](https://www.whoisxmlapi.com/domain-availability-api-guide.php) for
-authentication instructions.
+You'll need a
+[WhoisXmlApi account](https://www.whoisxmlapi.com/user/create.php) to
+authenticate.
+
+Please, refer to the
+[Domain availability API User Guide](https://www.whoisxmlapi.com/domain-availability-api-guide.php)
+for info on input parameters, request/response formats, authentication
+instructions and more.
