@@ -1,74 +1,98 @@
 try:
     # For Python v.3 and later
-    from urllib.request import urlopen
+    from urllib.request import urlopen, pathname2url
     from urllib.parse import quote
 except ImportError:
     # For Python v.2
-    from urllib2 import urlopen
-    from urllib2 import quote
-import json
+    from urllib import pathname2url
+    from urllib2 import urlopen, quote
+
 import base64
-import hmac
 import hashlib
+import hmac
+import json
 import time
+
 username = 'Your domain availability api username'
-apiKey = 'Your domain availability api api_key'
-secret = 'Your domain availability api secret_key'
+api_key = 'Your domain availability api key'
+secret = 'Your domain availability api secret key'
+
 domains = [
     'google.com',
     'example.com',
     'whoisxmlapi.com',
     'twitter.com'
 ]
-url = 'https://whoisxmlapi.com/whoisserver/WhoisService?'
-timestamp = 0
-digest = 0
 
-def generateDigest(username, timestamp, apikey, secret):
-    digest = username + str(timestamp) + apikey
-    hash = hmac.new(bytearray(secret.encode('utf-8')), bytearray(digest.encode('utf-8')), hashlib.md5)
-    return quote(str(hash.hexdigest()))
+url = 'https://whoisxmlapi.com/whoisserver/WhoisService'
 
-def generateParameters(username, apikey, secret):
-    timestamp = int(round(time.time() * 1000))
-    digest = generateDigest(username, timestamp, apikey, secret)
-    return timestamp, digest
 
-def buildRequest(username, timestamp, digest, domain):
-    requestString = "requestObject="
-    data = {'u': username, 't': timestamp}
-    dataJson = json.dumps(data)
-    dataBase64 = base64.b64encode(bytearray(dataJson.encode('utf-8')))
-    requestString += dataBase64.decode('utf-8')
-    requestString += '&cmd=GET_DN_AVAILABILITY'
-    requestString += "&digest="
-    requestString += digest
-    requestString += "&domainName="
-    requestString += domain
-    requestString += "&outputFormat=json"
-    return requestString
+def build_request(req_username, req_timestamp, req_digest, req_domain):
+    res = '?requestObject='
 
-def printResponse(response):
-    responseJson = json.loads(response)
-    if 'DomainInfo' in responseJson:
-        if 'domainName' in responseJson['DomainInfo']:
-            print("Domain Name: ")
-            print(responseJson['DomainInfo']['domainName'])
-        if 'domainAvailability' in responseJson['DomainInfo']:
-            print("Domain availability: ")
-            print(responseJson['DomainInfo']['domainAvailability'])
+    data = {
+        'u': req_username,
+        't': req_timestamp
+    }
 
-def request(url, username, timestamp, digest, domain):
-    request = buildRequest(username, timestamp, digest, domain)
-    response = urlopen(url + request).read().decode('utf8')
-    return response
+    data_json = json.dumps(data)
+    data_b64 = base64.b64encode(bytearray(data_json.encode('utf-8')))
 
-timestamp, digest = generateParameters(username, apiKey, secret)
+    res += pathname2url(data_b64.decode('utf-8'))
+    res += '&cmd=GET_DN_AVAILABILITY'
+    res += '&digest='
+    res += pathname2url(req_digest)
+    res += '&domainName='
+    res += pathname2url(req_domain)
+    res += '&outputFormat=json'
+
+    return res
+
+
+def generate_digest(req_username, req_timestamp, req_key, req_secret):
+    res_digest = req_username + str(req_timestamp) + req_key
+
+    res_hash = hmac.new(bytearray(req_secret.encode('utf-8')),
+                        bytearray(res_digest.encode('utf-8')),
+                        hashlib.md5)
+
+    return quote(str(res_hash.hexdigest()))
+
+
+def generate_parameters(req_username, req_key, req_secret):
+    res_timestamp = int(round(time.time() * 1000))
+
+    res_digest = generate_digest(req_username, res_timestamp,
+                                 req_key, req_secret)
+
+    return res_timestamp, res_digest
+
+
+def print_response(req_response):
+    response_json = json.loads(req_response)
+
+    if 'DomainInfo' in response_json:
+        if 'domainName' in response_json['DomainInfo']:
+            print('Domain Name: ')
+            print(response_json['DomainInfo']['domainName'])
+        if 'domainAvailability' in response_json['DomainInfo']:
+            print('Domain availability: ')
+            print(response_json['DomainInfo']['domainAvailability'])
+
+
+def request(req_url, req_username, req_timestamp, req_digest, req_domain):
+    res_request = build_request(req_username, req_timestamp,
+                                req_digest, req_domain)
+
+    return urlopen(req_url + res_request).read().decode('utf8')
+
+
+timestamp, digest = generate_parameters(username, api_key, secret)
 
 for domain in domains:
     response = request(url, username, timestamp, digest, domain)
-    if "Request timeout" in response:
-        timestamp, digest = generateParameters(username, apiKey, secret)
+    if 'Request timeout' in response:
+        timestamp, digest = generate_parameters(username, api_key, secret)
         response = request(url, username, timestamp, digest, domain)
-    printResponse(response)
-    print("---------------------------\n")
+    print_response(response)
+    print('---------------------------\n')

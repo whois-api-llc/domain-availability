@@ -1,11 +1,12 @@
+const crypto = require('crypto');
 const https = require('https');
 const queryString = require('querystring');
-const crypto = require('crypto');
 
-const url = 'https://whoisxmlapi.com/whoisserver/WhoisService?';
+const url = 'https://whoisxmlapi.com/whoisserver/WhoisService';
+
 const username = 'Your domain availability api username';
-const apiKey = 'Your domain availability api api_key';
-const secretKey = 'Your domain availability api secret_key';
+const apiKey = 'Your domain availability api key';
+const secretKey = 'Your domain availability api secret key';
 
 const domains = [
     'google.com',
@@ -15,21 +16,20 @@ const domains = [
 ];
 
 for(var i in domains) {
-    getWhois(username, apiKey, secretKey, domains[i]);
+    getAvailability(username, apiKey, secretKey, domains[i]);
 }
 
-function getWhois(username, apiKey, secretKey, domain)
+function getAvailability(username, apiKey, secretKey, domain)
 {
-    timestamp = (new Date).getTime();
-    digest = generateDigest(username, timestamp, apiKey, secretKey);
+    var timestamp = (new Date).getTime();
+    var digest = generateDigest(username, timestamp, apiKey, secretKey);
     var requestString = buildRequest(username, timestamp, digest, domain);
-    https.get(url + requestString, function (res) {
+
+    https.get(url + '?' + requestString, function (res) {
         const statusCode = res.statusCode;
 
         if (statusCode !== 200) {
-            console.log('Request failed: '
-                + statusCode
-            );
+            console.log('Request failed: ' + statusCode);
         }
 
         var rawData = '';
@@ -41,20 +41,23 @@ function getWhois(username, apiKey, secretKey, domain)
         res.on('end', function () {
             printResponse(rawData);
         })
-    }).on('error', function(e) {
-        console.log("Error: " + e.message);
-    });
 
+    }).on('error', function(e) {
+        console.log('Error: ' + e.message);
+    });
 }
 
-function generateDigest(username, timestamp, apiKey, secretKey) {
+function generateDigest(username, timestamp, apiKey, secretKey)
+{
     var data = username + timestamp + apiKey;
     var hmac = crypto.createHmac('md5', secretKey);
     hmac.update(data);
+
     return hmac.digest('hex');
 }
 
-function buildRequest(username, timestamp, digest, domain) {
+function buildRequest(username, timestamp, digest, domain)
+{
     var data = {
         u: username,
         t: timestamp
@@ -74,15 +77,17 @@ function buildRequest(username, timestamp, digest, domain) {
     return queryString.stringify(request);
 }
 
-function printResponse(responseRaw) {
-    response = JSON.parse(responseRaw);
+function printResponse(responseRaw)
+{
+    var response = JSON.parse(responseRaw);
+
     if (response.DomainInfo) {
-        output = 'Domain name: ';
+        var output = 'Domain name: ';
         output += response.DomainInfo.domainName;
-        output += "\n";
+        output += '\n';
         output += 'Domain availability: ';
         output += response.DomainInfo.domainAvailability;
-        output += "\n";
+        output += '\n';
         console.log(output);
     } else {
         console.log(response);

@@ -13,29 +13,34 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class DomainAvailabilityApiKeySample {
+public class DomainAvailabilityApiKeySample
+{
+    private Logger logger =
+        Logger.getLogger(DomainAvailabilityApiKeySample.class.getName());
 
-    private Logger logger = Logger.getLogger(DomainAvailabilityApiKeySample.class.getName());
-
-    public static void main(String[]args) {
+    public static void main(String[]args)
+    {
         new DomainAvailabilityApiKeySample().getSimpleDomainUsingApiKey();
     }
 
-    private void getSimpleDomainUsingApiKey() {
+    private void getSimpleDomainUsingApiKey()
+    {
         String domainName = "google.com";
 
         String username = "Your domain availability api username";
-        String apiKey = "Your domain availability api apiKey";
-        String secretKey = "Your domain availability api secretKey";
+        String apiKey = "Your domain availability api key";
+        String secretKey = "Your domain availability api secret key";
 
         getDomainNameUsingApiKey(domainName, username, apiKey, secretKey);
     }
 
-    private String executeURL(String url) {
+    private String executeURL(String url)
+    {
         HttpClient c = new HttpClient();
         System.out.println(url);
         HttpMethod m = new GetMethod(url);
         String res = null;
+
         try {
             c.executeMethod(m);
             res = new String(m.getResponseBody());
@@ -44,23 +49,35 @@ public class DomainAvailabilityApiKeySample {
         } finally {
             m.releaseConnection();
         }
+
         return res;
     }
 
-    public void getDomainNameUsingApiKey(String domainName, String username, String apiKey, String secretKey) {
-        String apiKeyAuthenticationRequest = generateApiKeyAuthenticationRequest(username, apiKey, secretKey);
+    public void getDomainNameUsingApiKey(
+        String domainName,
+        String username,
+        String apiKey,
+        String secretKey
+    )
+    {
+        String apiKeyAuthenticationRequest =
+            generateApiKeyAuthenticationRequest(username, apiKey, secretKey);
+
         if (apiKeyAuthenticationRequest == null) {
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("http://www.whoisxmlapi.com/whoisserver/WhoisService?");
-        sb.append(apiKeyAuthenticationRequest);
-        sb.append("&cmd=GET_DN_AVAILABILITY");
-        sb.append("&domainName=");
-        sb.append(domainName);
+        String domName = "";
+        try {
+            domName = URLEncoder.encode(domainName, "UTF-8");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "an error occurred", e);
+        }
 
-        String url = sb.toString();
+        String url = "https://www.whoisxmlapi.com/whoisserver/WhoisService?"
+                   + apiKeyAuthenticationRequest
+                   + "&cmd=GET_DN_AVAILABILITY"
+                   + "&domainName=" + domName;
 
         String result = executeURL(url);
         if (result != null) {
@@ -68,46 +85,59 @@ public class DomainAvailabilityApiKeySample {
         }
     }
 
-    private String generateApiKeyAuthenticationRequest(String username, String apiKey, String secretKey) {
+    private String generateApiKeyAuthenticationRequest(
+        String username,
+        String apiKey,
+        String secretKey
+    )
+    {
         try {
             long timestamp = System.currentTimeMillis();
 
             String request = generateRequest(username, timestamp);
-            String digest = generateDigest(username, apiKey, secretKey, timestamp);
+            String digest =
+                generateDigest(username, apiKey, secretKey, timestamp);
 
             String requestURL = URLEncoder.encode(request, "UTF-8");
             String digestURL = URLEncoder.encode(digest, "UTF-8");
 
-            String apiKeyAuthenticationRequest = "requestObject="+requestURL+"&digest="+digestURL;
-            return apiKeyAuthenticationRequest;
+            return "requestObject=" + requestURL + "&digest=" + digestURL;
         } catch (Exception e) {
             logger.log(Level.SEVERE, "an error occurred", e);
         }
         return null;
     }
 
-    private String generateRequest(String username, long timestamp) throws JSONException {
+    private String generateRequest(String username, long timestamp)
+        throws JSONException
+    {
         JSONObject json = new JSONObject();
         json.put("u", username);
         json.put("t", timestamp);
         String jsonStr = json.toString();
         byte[] json64 = Base64.encodeBase64(jsonStr.getBytes());
-        String json64Str = new String(json64);
-        return json64Str;
+
+        return new String(json64);
     }
 
-    private String generateDigest(String username, String apiKey, String secretKey, long timestamp) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        sb.append(username);
-        sb.append(timestamp);
-        sb.append(apiKey);
+    private String generateDigest(
+        String username,
+        String apiKey,
+        String secretKey,
+        long timestamp
+    )
+        throws Exception
+    {
+        String sb = username + timestamp + apiKey;
 
-        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes("UTF-8"), "HmacMD5");
+        SecretKeySpec secretKeySpec =
+            new SecretKeySpec(secretKey.getBytes("UTF-8"), "HmacMD5");
+
         Mac mac = Mac.getInstance(secretKeySpec.getAlgorithm());
         mac.init(secretKeySpec);
 
-        byte[] digestBytes = mac.doFinal(sb.toString().getBytes("UTF-8"));
-        String digest = new String(Hex.encodeHex(digestBytes));
-        return digest;
+        byte[] digestBytes = mac.doFinal(sb.getBytes("UTF-8"));
+
+        return new String(Hex.encodeHex(digestBytes));
     }
 }

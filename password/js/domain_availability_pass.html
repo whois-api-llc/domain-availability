@@ -1,22 +1,37 @@
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-<script type="text/javascript">
-	// Fill in your details
-	var username = "Your domain availability api username";
-	var password = "Your domain availability api password";
-	var domain = "google.com";
-	var format = "JSON";
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Domain Availability API jQuery Search Sample</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript">
 
-	window.addEventListener("load", onPageLoad, false);
+        var url = "https://www.whoisxmlapi.com/whoisserver/WhoisService";
+        // Fill in your details
+        var username = "Your domain availability api username";
+        var password = "Your domain availability api password";
+        var domain = "google.com";
+        var format = "JSON";
 
-	function onPageLoad() {
-        $.ajax({
-            url: "http://www.whoisxmlapi.com/whoisserver/WhoisService",
-            dataType: "json",
-            data: {cmd: "GET_DN_AVAILABILITY", domainName: domain, username: username,
-                password: password, outputFormat: format},
-            success: function(data) {
-                $("body").append("<pre>"+ JSON.stringify(data,"",2)+"</pre>");
-            }
+        $(function() {
+            $.ajax(
+                {
+                    url: url,
+                    dataType: "json",
+                    data: {
+                        cmd: "GET_DN_AVAILABILITY",
+                        domainName: domain,
+                        username: username,
+                        password: password,
+                        outputFormat: format
+                    },
+                    success: function(data) {
+                        $("body").append(
+                            "<pre>"+ JSON.stringify(data, null, 2) +"</pre>");
+                    }
+                }
+            );
         });
-	}
-</script>
+    </script>
+</head>
+<body></body>
+</html>

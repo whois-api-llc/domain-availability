@@ -1,48 +1,58 @@
-require 'open-uri'
+require 'erb'
 require 'json'
+require 'net/https'
 require 'rexml/document'
 require 'rexml/xpath'
-require 'yaml'		# only needed to print the returned result in a very pretty way
+require 'uri'
+require 'yaml' # only needed to print the returned result in a very pretty way
 
 ########################
 # Fill in your details #
 ########################
-username = "Your domain availability api username"
-password = "Your domain availability api password"
-domain = "google.com"
+username = 'Your domain availability api username'
+password = 'Your domain availability api password'
+domain = 'google.com'
+
+url = 'https://www.whoisxmlapi.com/whoisserver/WhoisService'\
+      '?cmd=GET_DN_AVAILABILITY'\
+      '&domainName=' + ERB::Util.url_encode(domain) +
+      '&username=' + ERB::Util.url_encode(username) +
+      '&password=' + ERB::Util.url_encode(password) +
+      '&outputFormat='
 
 #######################
 # Use a JSON resource #
 #######################
-format = "JSON"
-url = 'https://www.whoisxmlapi.com/whoisserver/WhoisService?' + 'cmd=GET_DN_AVAILABILITY' + '&domainName=' + domain + '&username=' + username + '&password=' + password + '&outputFormat=' + format
+format = 'JSON'
 
 # Open the resource
-buffer = open(url).read
+buffer = Net::HTTP.get(URI.parse(url + format))
 
 # Parse the JSON result
 result = JSON.parse(buffer)
 
 # Print out a nice informative string
-puts "XML:\n" + result.to_yaml + "\n"
+puts "JSON:\n" + result.to_yaml + "\n"
 
 #######################
 # Use an XML resource #
 #######################
-format = "XML"
-url = 'http://www.whoisxmlapi.com/whoisserver/WhoisService?' + 'cmd=' + 'GET_DN_AVAILABILITY' + '&domainName=' + domain + '&username=' + username + '&password=' + password + '&outputFormat=' + format
+format = 'XML'
 
 # Open the resource
-buffer = open(url).read
+buffer = Net::HTTP.get(URI.parse(url + format))
 
 # Parse the XML result
 result = REXML::Document.new(buffer)
 
 # Get a few data members and make sure they aren't nil
-if ((errorMessage = REXML::XPath.first(result, "/ErrorMessage/msg")) != nil)
-	puts "JSON:\nErrorMessage:\n\t" + errorMessage.text
+da_path = '/DomainInfo/domainAvailability'
+dom_path = '/DomainInfo/domainName'
+
+if !(error_message = REXML::XPath.first(result, '/ErrorMessage/msg')).nil?
+  puts "XML:\nErrorMessage:\n\t" + error_message.text
 else
-  domainAvailability = (domainAvailability = REXML::XPath.first(result, "/DomainInfo/domainAvailability")) == nil ? '' : domainAvailability.text
-  domainName = (domainName = REXML::XPath.first(result, "/DomainInfo/domainName")) == nil ? '' : domainName.text
-	puts "JSON:\n---\n" + "  domainAvailability: " + domainAvailability + "\n  domainName: " + domainName
+  info = (info = REXML::XPath.first(result, da_path)).nil? ? '' : info.text
+  dom = (dom = REXML::XPath.first(result, dom_path)).nil? ? '' : dom.text
+  puts "XML:\n---\n" + '  availability: ' + info + "\n  domainName: " + dom
 end
